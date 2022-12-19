@@ -1,3 +1,4 @@
+import numpy
 from copy import copy, deepcopy
 from typing import Optional, List, Dict
 
@@ -113,10 +114,19 @@ def average_information(data_attribute_subset: pd.DataFrame, target_attribute_va
 
 
 class ID3Node:
-    def __init__(self, attribute_name: str, values_of_attribute, children: ['ID3Node'] = None):
+    def __init__(self, attribute_name: str, values_of_attribute, children_nodes: ['ID3Node'] = None):
         self._attribute_name = attribute_name
+        self._tree_branches_dictionary = {value: child_node for value, child_node in zip(values_of_attribute, children_nodes)}
         self._values_of_attribute = values_of_attribute
-        self._children_nodes = children
+        self._children_nodes = children_nodes
+
+    def predict_next_node(self, data_row: pd.Series):
+        print(data_row)
+        value = data_row[self._attribute_name]
+        next_node = self._tree_branches_dictionary[value]
+        if next_node is isinstance(numpy.int):
+
+        return next_node.predict_next_node(data_row)
 
 
 class ID3Tree:
@@ -158,7 +168,7 @@ class ID3Tree:
         """
         total_class_number = target_attribute.value_counts()
         if len(total_class_number) == 1 or depth == 0 or len(dataset_to_analyse.columns) == 0:
-            return total_class_number[0]
+            return total_class_number[0]  # nie jestem tego pewna
         attributes_information_gain = calculate_information_gains_for_each_attribute(dataset_to_analyse, target_attribute)
         division_attribute = find_best_attribute(attributes_information_gain)
         values_to_analyse = dataset_to_analyse[division_attribute].unique()
@@ -173,6 +183,14 @@ class ID3Tree:
                                           target_attribute[dataset_to_analyse[division_attribute] == value], depth - 1) for value in values_to_analyse]
         return ID3Node(division_attribute, values_to_analyse, children_nodes)
 
+    def predict_target_attribute_value(self, train_dataset: pd.DataFrame):
+        root_node = self.get_root()
+        return train_dataset.apply(lambda data_row: root_node.predict_next_node(data_row), axis=1)
+
+
+
+
+
 
 data_frame = extract_data_from_csv_file('breast_cancer.csv')
 breast_cancer_columns = ["Class", "age", "menopause", "tumor size", "inv nodes", "node caps", "deg malig", "breast", "breast quad", "irradiat"]
@@ -182,11 +200,15 @@ data, target = divide_dataset_for_target_attribute(formatted_data, 'irradiat')
 formatted_data_2 = formatted_data.where(formatted_data == 'irradiat')
 
 
-X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.25)
+x_train, x_test, y_train, y_test = train_test_split(data, target, test_size=0.25)
 tree = ID3Tree(5)
 total_class_number = target.value_counts()
 print(total_class_number[0])
-tree.set_root(tree.build_ID3_tree(X_train, y_train, tree.get_max_depth()))
+tree.set_root(tree.build_ID3_tree(x_train, y_train, tree.get_max_depth()))
+y_train_prediction = tree.predict_target_attribute_value(x_train)
+y_test_prediction = tree.predict_target_attribute_value(x_test)
+print(y_test_prediction)
+print(y_train_prediction)
 # attribute_information_gains = {}
 # for each_column in data.columns:
 #     # print(data[each_column].name)
