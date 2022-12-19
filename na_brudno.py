@@ -122,9 +122,22 @@ class ID3Node:
 
     def predict_next_node(self, data_row: pd.Series):
         print(data_row)
+        print(self._attribute_name)
+        print()
         value = data_row[self._attribute_name]
-        next_node = self._tree_branches_dictionary[value]
-        if next_node is isinstance(numpy.int):
+        print(value)
+        print()
+        # if not isinstance(value, ID3Node):
+        #     return value
+        try:
+            next_node = self._tree_branches_dictionary[value]
+            if not isinstance(next_node, ID3Node):
+                print(next_node)
+                return next_node
+        except KeyError:
+
+            if not isinstance(next_node, ID3Node):
+                return next_node
 
         return next_node.predict_next_node(data_row)
 
@@ -168,7 +181,7 @@ class ID3Tree:
         """
         total_class_number = target_attribute.value_counts()
         if len(total_class_number) == 1 or depth == 0 or len(dataset_to_analyse.columns) == 0:
-            return total_class_number[0]  # nie jestem tego pewna
+            return total_class_number.index.tolist()[0]  # nie jestem tego pewna
         attributes_information_gain = calculate_information_gains_for_each_attribute(dataset_to_analyse, target_attribute)
         division_attribute = find_best_attribute(attributes_information_gain)
         values_to_analyse = dataset_to_analyse[division_attribute].unique()
@@ -185,7 +198,10 @@ class ID3Tree:
 
     def predict_target_attribute_value(self, train_dataset: pd.DataFrame):
         root_node = self.get_root()
-        return train_dataset.apply(lambda data_row: root_node.predict_next_node(data_row), axis=1)
+        for _, each_row in train_dataset.iterrows():
+            root_node.predict_next_node(each_row)
+        return train_dataset
+        # return train_dataset.apply(lambda data_row: root_node.predict_next_node(data_row), axis=1)
 
 
 
