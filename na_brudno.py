@@ -157,11 +157,18 @@ class ID3Tree:
         :return: a ID3 tree with newly created ID3 Nodes
         """
         total_class_number = target_attribute.value_counts()
-        if len(total_class_number) == 1 or self.get_max_depth() == 0 or len(dataset_to_analyse.columns) == 0:
+        if len(total_class_number) == 1 or depth == 0 or len(dataset_to_analyse.columns) == 0:
             return total_class_number[0]
         attributes_information_gain = calculate_information_gains_for_each_attribute(dataset_to_analyse, target_attribute)
         division_attribute = find_best_attribute(attributes_information_gain)
         values_to_analyse = dataset_to_analyse[division_attribute].unique()
+        # children_nodes = []
+        # for value in values_to_analyse:
+        #     new_dataset = dataset_to_analyse[dataset_to_analyse[division_attribute] == value].drop(division_attribute, axis=1)
+        #     sliced_rows_of_target_attribute = target_attribute[dataset_to_analyse[division_attribute] == value]
+        #     new_depth = depth - 1
+        #     new_branch = self.build_ID3_tree(new_dataset, sliced_rows_of_target_attribute, new_depth)
+        #     children_nodes.append(new_branch)
         children_nodes = [self.build_ID3_tree(dataset_to_analyse[dataset_to_analyse[division_attribute] == value].drop(division_attribute, axis=1),
                                           target_attribute[dataset_to_analyse[division_attribute] == value], depth - 1) for value in values_to_analyse]
         return ID3Node(division_attribute, values_to_analyse, children_nodes)
@@ -176,7 +183,9 @@ formatted_data_2 = formatted_data.where(formatted_data == 'irradiat')
 
 
 X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.25)
-tree = ID3Tree(2)
+tree = ID3Tree(5)
+total_class_number = target.value_counts()
+print(total_class_number[0])
 tree.set_root(tree.build_ID3_tree(X_train, y_train, tree.get_max_depth()))
 # attribute_information_gains = {}
 # for each_column in data.columns:
